@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ntfy Console // Matrix Theme</title>
+    <style>
+        /* Variáveis de Cores - Tema Matrix */
+        :root {
+            --bg-color: #0D0208;
+            --text-color: #00FF41;
+            --border-color: #008F11;
+            --hover-bg: #00FF41;
+            --hover-text: #0D0208;
+            --error-color: #FF003C;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #000000;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 5vh;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px var(--text-color);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: transparent;
+            color: var(--text-color);
+            border: none;
+            border-right: 1px solid var(--border-color);
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:last-child {
+            border-right: none;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--border-color);
+            color: var(--hover-text);
+            font-weight: bold;
+        }
+
+        /* Conteúdo das abas */
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Formulários */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"], 
+        textarea, 
+        select {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            box-shadow: 0 0 8px var(--border-color);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button.action-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: var(--font-main);
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        button.action-btn:hover {
+            background-color: var(--hover-bg);
+            color: var(--hover-text);
+            box-shadow: 0 0 10px var(--hover-bg);
+        }
+
+        /* Lista de Contatos */
+        .contact-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .contact-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px dashed var(--border-color);
+            margin-bottom: 10px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .contact-info strong {
+            display: block;
+            font-size: 1.1rem;
+        }
+        
+        .contact-info span {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+
+        .delete-btn:hover {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        /* Status Message */
+        #status-message {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 20px;
+        }
+        
+        .success { color: var(--text-color); }
+        .error { color: var(--error-color); }
+
+        /* Responsividade */
+        @media (max-width: 480px) {
+            .container { margin-top: 0; border-radius: 0; border: none; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>[ Ntfy Console ]</h1>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('send')">1. ENVIAR</button>
+            <button class="tab-btn" onclick="switchTab('manage')">2. CONTATOS</button>
+        </div>
+
+        <div id="tab-send" class="tab-content active">
+            <div class="form-group">
+                <label for="message">Mensagem:</label>
+                <textarea id="message" placeholder="Digite sua mensagem aqui..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="contact-select">Destinatário:</label>
+                <select id="contact-select">
+                    <option value="">-- Selecione um contato --</option>
+                </select>
+            </div>
+
+            <button class="action-btn" onclick="sendMessage()">Transmitir Mensagem</button>
+            
+            <div id="status-message"></div>
+        </div>
+
+        <div id="tab-manage" class="tab-content">
+            <div class="form-group">
+                <label for="contact-name">Nome do Contato:</label>
+                <input type="text" id="contact-name" placeholder="Ex: Matheus">
+            </div>
+
+            <div class="form-group">
+                <label for="contact-url">URL do Ntfy:</label>
+                <input type="text" id="contact-url" placeholder="Ex: https://ntfy.sh/meu_topico_secreto">
+            </div>
+
+            <button class="action-btn" onclick="addContact()">Salvar Contato</button>
+
+            <ul class="contact-list" id="contact-list">
+                </ul>
+        </div>
+    </div>
+
+    <script>
+        // Inicializar contatos do LocalStorage
+        let contacts = JSON.parse(localStorage.getItem('ntfyContacts')) || [];
+
+        // Inicializa a interface
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUI();
+        });
+
+        // Alternar entre abas
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            document.getElementById('status-message').innerText = ''; // Limpa mensagens de status ao trocar
+        }
+
+        // Adicionar novo contato
+        function addContact() {
+            const nameInput = document.getElementById('contact-name');
+            const urlInput = document.getElementById('contact-url');
+            const name = nameInput.value.trim();
+            let url = urlInput.value.trim();
+
+            if (!name || !url) {
+                alert('Por favor, preencha o nome e a URL.');
+                return;
+            }
+
+            // Garante que a URL comece com http se o usuário esquecer
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+
+            contacts.push({ name, url });
+            saveContacts();
+            updateUI();
+
+            nameInput.value = '';
+            urlInput.value = '';
+            nameInput.focus();
+        }
+
+        // Deletar contato
+        function deleteContact(index) {
+            if(confirm('Excluir este contato do sistema?')) {
+                contacts.splice(index, 1);
+                saveContacts();
+                updateUI();
+            }
+        }
+
+        // Salvar no LocalStorage
+        function saveContacts() {
+            localStorage.setItem('ntfyContacts', JSON.stringify(contacts));
+        }
+
+        // Atualizar Select e Lista
+        function updateUI() {
+            const select = document.getElementById('contact-select');
+            const list = document.getElementById('contact-list');
+            
+            // Limpa ambos
+            select.innerHTML = '<option value="">-- Selecione um contato --</option>';
+            list.innerHTML = '';
+
+            contacts.forEach((contact, index) => {
+                // Preenche o Select
+                const option = document.createElement('option');
+                option.value = contact.url;
+                option.textContent = contact.name;
+                select.appendChild(option);
+
+                // Preenche a Lista de Gerenciamento
+                const li = document.createElement('li');
+                li.className = 'contact-item';
+                li.innerHTML = `
+                    <div class="contact-info">
+                        <strong>${contact.name}</strong>
+                        <span>${contact.url}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteContact(${index})">X</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        // Enviar a mensagem para o Ntfy
+        async function sendMessage() {
+            const message = document.getElementById('message').value.trim();
+            const url = document.getElementById('contact-select').value;
+            const statusDiv = document.getElementById('status-message');
+
+            if (!message) {
+                showStatus('Erro: Digite uma mensagem.', 'error');
+                return;
+            }
+
+            if (!url) {
+                showStatus('Erro: Selecione um destinatário.', 'error');
+                return;
+            }
+
+            statusDiv.innerHTML = 'Transmitindo...';
+            statusDiv.className = '';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: message
+                });
+
+                if (response.ok) {
+                    showStatus('Mensagem transmitida com sucesso.', 'success');
+                    document.getElementById('message').value = ''; // Limpa o campo
+                } else {
+                    showStatus(`Falha na transmissão: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus('Erro de conexão com o servidor.', 'error');
+                console.error(error);
+            }
+        }
+
+        // Exibir mensagens de status
+        function showStatus(text, type) {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.textContent = text;
+            statusDiv.className = type;
+            
+            // Remove a mensagem após 5 segundos
+            setTimeout(() => {
+                statusDiv.textContent = '';
+                statusDiv.className = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
