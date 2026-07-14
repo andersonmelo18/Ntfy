@@ -315,7 +315,7 @@
                 <button class="preset-btn" onclick="applyPreset('rota')">🏍️ Rota Pega</button>
                 <button class="preset-btn" onclick="applyPreset('voto')">🎯 Voto Conf.</button>
                 <button class="preset-btn" onclick="applyPreset('admin')">💬 Msg Admin</button>
-                <button class="preset-btn danger" onclick="applyPreset('limpar')">❌ Limpar</button>
+                <button class="preset-btn danger" onclick="applyPreset('limpar')">❌ Limpar / Agora</button>
             </div>
 
             <div class="form-group">
@@ -354,9 +354,9 @@
             </div>
 
             <div class="form-group" style="background: rgba(0, 143, 17, 0.05); padding: 15px; border-radius: 6px; border: 1px dashed var(--border-color);">
-                <label for="msg-delay">⏱️ Agendar Envio (Opcional):</label>
+                <label for="msg-delay">⏱️ Agendar Envio:</label>
                 <input type="datetime-local" id="msg-delay">
-                <span class="info-text">Se deixar em branco, a mensagem será enviada <b>imediatamente</b>.</span>
+                <span class="info-text">Mostra a hora atual. Avance a hora para <b>agendar no futuro</b>, ou deixe no horário atual/apague para enviar <b>imediatamente</b>.</span>
             </div>
 
             <button class="action-btn" onclick="sendMessage()">Transmitir Alerta</button>
@@ -385,6 +385,17 @@
         // Inicializar contatos do LocalStorage
         let contacts = JSON.parse(localStorage.getItem('ntfyContacts')) || [];
 
+        // FUNÇÃO NOVA: Pega a data/hora atual no formato exigido pelo campo HTML
+        function getCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
         // Inicializa a interface
         document.addEventListener('DOMContentLoaded', () => {
             updateUI();
@@ -404,28 +415,28 @@
                 titleInput.value = "ROTA PEGA! NOME ENVIADO";
                 prioritySelect.value = "5"; 
                 tagsInput.value = "rotating_light,motorcycle,white_check_mark";
-                delayInput.value = ""; // Limpa agendamento
+                delayInput.value = getCurrentDateTime(); // Reseta pro horário de agora
             } 
             else if (type === 'voto') {
                 msgInput.value = "Voto confirmado no sistema.";
                 titleInput.value = "VOTO REGISTRADO!";
                 prioritySelect.value = "5";
                 tagsInput.value = "dart,heavy_check_mark";
-                delayInput.value = "";
+                delayInput.value = getCurrentDateTime();
             } 
             else if (type === 'admin') {
                 msgInput.value = "Atenção: Verifique o painel imediatamente.";
                 titleInput.value = "MENSAGEM URGENTE DO ADMIN";
                 prioritySelect.value = "4"; 
                 tagsInput.value = "speech_balloon,eyes,warning";
-                delayInput.value = "";
+                delayInput.value = getCurrentDateTime();
             } 
             else if (type === 'limpar') {
                 msgInput.value = "";
                 titleInput.value = "";
                 prioritySelect.value = "3"; 
                 tagsInput.value = "";
-                delayInput.value = "";
+                delayInput.value = getCurrentDateTime(); // Preenche a hora exata do clique
             }
         }
 
@@ -522,18 +533,20 @@
                 return;
             }
 
-            // Lógica de agendamento (Delay)
+            // Lógica inteligente de agendamento (Delay)
             let delayHeader = null;
+            
             if (delayInput) {
                 const scheduledTime = new Date(delayInput).getTime() / 1000;
                 const currentTime = new Date().getTime() / 1000;
                 
-                if (scheduledTime > currentTime) {
+                // Se a data/hora programada for maior que o momento atual (com 10 seg de margem)
+                if (scheduledTime > currentTime + 10) {
                     delayHeader = Math.floor(scheduledTime).toString();
                     statusDiv.innerHTML = 'Agendando pulso no servidor...';
                 } else {
-                    showStatus('Erro: O horário de agendamento deve ser no futuro.', 'error');
-                    return;
+                    // Se for igual a agora ou no passado, ele simplesmente ignora e manda agora.
+                    statusDiv.innerHTML = 'Transmitindo pulso imediato...';
                 }
             } else {
                 statusDiv.innerHTML = 'Transmitindo pulso imediato...';
@@ -547,7 +560,7 @@
             };
             if (title) headers["Title"] = title;
             if (tags) headers["Tags"] = tags;
-            if (delayHeader) headers["Delay"] = delayHeader; // Adiciona o agendamento se existir
+            if (delayHeader) headers["Delay"] = delayHeader; // Só adiciona se for um agendamento real pro futuro
 
             try {
                 const response = await fetch(url, {
@@ -560,7 +573,7 @@
                     if (delayHeader) {
                         showStatus('Sinal AGENDADO com sucesso no servidor!', 'success');
                     } else {
-                        showStatus('Sinal transmitido com sucesso. Android acionado!', 'success');
+                        showStatus('Sinal transmitido IMEDIATAMENTE com sucesso!', 'success');
                     }
                 } else {
                     showStatus(`Falha na transmissão: ${response.status}`, 'error');
@@ -580,7 +593,7 @@
             setTimeout(() => {
                 statusDiv.textContent = '';
                 statusDiv.className = '';
-            }, 6000); // Aumentei um pouco o tempo para você ler a mensagem de sucesso
+            }, 6000); 
         }
     </script>
 </body>
