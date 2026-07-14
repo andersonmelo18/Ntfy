@@ -114,7 +114,6 @@
         }
 
         input[type="text"], 
-        input[type="datetime-local"],
         textarea, 
         select {
             width: 100%;
@@ -128,12 +127,6 @@
             outline: none;
             transition: box-shadow 0.3s;
         }
-        
-        /* Ajuste do ícone de calendário no input type date */
-        ::-webkit-calendar-picker-indicator {
-            filter: invert(50%) sepia(100%) saturate(500%) hue-rotate(80deg) brightness(100%) contrast(100%);
-            cursor: pointer;
-        }
 
         input:focus, textarea:focus, select:focus {
             box-shadow: 0 0 8px var(--border-color);
@@ -144,7 +137,7 @@
             min-height: 100px;
         }
 
-        /* Botões de Modelos Rápidos */
+        /* ----- NOVO: Botões de Modelos Rápidos (Presets) ----- */
         .presets-container {
             display: flex;
             flex-wrap: wrap;
@@ -168,7 +161,7 @@
 
         .preset-btn {
             flex: 1;
-            min-width: 110px;
+            min-width: 110px; /* Garante que não fiquem finos demais */
             background: transparent;
             color: var(--text-color);
             border: 1px solid var(--border-color);
@@ -198,13 +191,7 @@
             color: #fff;
             box-shadow: 0 0 8px var(--error-color);
         }
-
-        .info-text {
-            display: block;
-            margin-top: 5px;
-            font-size: 0.8rem;
-            opacity: 0.7;
-        }
+        /* --------------------------------------------------- */
 
         button.action-btn {
             width: 100%;
@@ -289,12 +276,12 @@
         .success { color: #fff; background-color: rgba(0, 143, 17, 0.3); border: 1px solid var(--border-color); }
         .error { color: #fff; background-color: rgba(255, 0, 60, 0.3); border: 1px solid var(--error-color); }
 
-        /* Responsividade */
+        /* Responsividade Aprimorada */
         @media (max-width: 480px) {
             .container { margin-top: 0; border-radius: 0; border: none; }
             body { padding: 0; }
             .form-row { flex-direction: column; gap: 0; }
-            .preset-btn { flex: 1 1 45%; }
+            .preset-btn { flex: 1 1 45%; } /* Deixa os botões em 2 colunas no celular */
         }
     </style>
 </head>
@@ -353,12 +340,6 @@
                 </div>
             </div>
 
-            <div class="form-group" style="background: rgba(0, 143, 17, 0.05); padding: 15px; border-radius: 6px; border: 1px dashed var(--border-color);">
-                <label for="msg-delay">⏱️ Agendar Envio (Opcional):</label>
-                <input type="datetime-local" id="msg-delay">
-                <span class="info-text">Se deixar em branco, a mensagem será enviada <b>imediatamente</b>.</span>
-            </div>
-
             <button class="action-btn" onclick="sendMessage()">Transmitir Alerta</button>
             
             <div id="status-message"></div>
@@ -388,46 +369,45 @@
         // Inicializa a interface
         document.addEventListener('DOMContentLoaded', () => {
             updateUI();
-            applyPreset('limpar'); 
+            applyPreset('limpar'); // Força a tela a iniciar limpa sempre
         });
 
-        // Aplicar modelos rápidos
+        // ==========================================
+        // LÓGICA DOS BOTÕES DE ATALHO (PRESETS)
+        // Você pode alterar as mensagens enviadas aqui!
+        // ==========================================
         function applyPreset(type) {
             const msgInput = document.getElementById('message');
             const titleInput = document.getElementById('msg-title');
             const prioritySelect = document.getElementById('msg-priority');
             const tagsInput = document.getElementById('msg-tags');
-            const delayInput = document.getElementById('msg-delay');
 
             if (type === 'rota') {
                 msgInput.value = "Selecionado por Administrador. ACESSE O APP AGORA!";
                 titleInput.value = "ROTA PEGA! NOME ENVIADO";
                 prioritySelect.value = "5"; 
                 tagsInput.value = "rotating_light,motorcycle,white_check_mark";
-                delayInput.value = ""; // Limpa agendamento
             } 
             else if (type === 'voto') {
                 msgInput.value = "Voto confirmado no sistema.";
                 titleInput.value = "VOTO REGISTRADO!";
                 prioritySelect.value = "5";
                 tagsInput.value = "dart,heavy_check_mark";
-                delayInput.value = "";
             } 
             else if (type === 'admin') {
                 msgInput.value = "Atenção: Verifique o painel imediatamente.";
                 titleInput.value = "MENSAGEM URGENTE DO ADMIN";
                 prioritySelect.value = "4"; 
                 tagsInput.value = "speech_balloon,eyes,warning";
-                delayInput.value = "";
             } 
             else if (type === 'limpar') {
                 msgInput.value = "";
                 titleInput.value = "";
-                prioritySelect.value = "3"; 
+                prioritySelect.value = "3"; // Volta pra prioridade normal
                 tagsInput.value = "";
-                delayInput.value = "";
             }
         }
+        // ==========================================
 
         // Alternar entre abas
         function switchTab(e, tabName) {
@@ -507,14 +487,13 @@
             });
         }
 
-        // Enviar a mensagem com os Headers
+        // Enviar a mensagem mapeando os Headers do Robô Python
         async function sendMessage() {
             const message = document.getElementById('message').value.trim();
             const url = document.getElementById('contact-select').value;
             const title = document.getElementById('msg-title').value.trim();
             const priority = document.getElementById('msg-priority').value;
             const tags = document.getElementById('msg-tags').value.trim();
-            const delayInput = document.getElementById('msg-delay').value;
             const statusDiv = document.getElementById('status-message');
 
             if (!url) {
@@ -522,23 +501,7 @@
                 return;
             }
 
-            // Lógica de agendamento (Delay)
-            let delayHeader = null;
-            if (delayInput) {
-                const scheduledTime = new Date(delayInput).getTime() / 1000;
-                const currentTime = new Date().getTime() / 1000;
-                
-                if (scheduledTime > currentTime) {
-                    delayHeader = Math.floor(scheduledTime).toString();
-                    statusDiv.innerHTML = 'Agendando pulso no servidor...';
-                } else {
-                    showStatus('Erro: O horário de agendamento deve ser no futuro.', 'error');
-                    return;
-                }
-            } else {
-                statusDiv.innerHTML = 'Transmitindo pulso imediato...';
-            }
-            
+            statusDiv.innerHTML = 'Transmitindo pulso...';
             statusDiv.className = '';
 
             // Construção dos headers idênticos ao código Python do robô
@@ -547,7 +510,6 @@
             };
             if (title) headers["Title"] = title;
             if (tags) headers["Tags"] = tags;
-            if (delayHeader) headers["Delay"] = delayHeader; // Adiciona o agendamento se existir
 
             try {
                 const response = await fetch(url, {
@@ -557,11 +519,9 @@
                 });
 
                 if (response.ok) {
-                    if (delayHeader) {
-                        showStatus('Sinal AGENDADO com sucesso no servidor!', 'success');
-                    } else {
-                        showStatus('Sinal transmitido com sucesso. Android acionado!', 'success');
-                    }
+                    showStatus('Sinal transmitido com sucesso. Android acionado!', 'success');
+                    // Opcional: Apagar a mensagem após o envio, descomente a linha abaixo se quiser
+                    // document.getElementById('message').value = ''; 
                 } else {
                     showStatus(`Falha na transmissão: ${response.status}`, 'error');
                 }
@@ -580,7 +540,7 @@
             setTimeout(() => {
                 statusDiv.textContent = '';
                 statusDiv.className = '';
-            }, 6000); // Aumentei um pouco o tempo para você ler a mensagem de sucesso
+            }, 5000);
         }
     </script>
 </body>
